@@ -1,0 +1,13 @@
+{
+  "name": "dcs",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter ./server --filter ./client run dev",
+    "build": "pnpm --filter ./shared run build && pnpm --filter ./client run build && pnpm --filter ./server run build",
+    "test": "pnpm -r run test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
