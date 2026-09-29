@@ -5,3 +5,4 @@ dist/
 circuits/
 *.sqlite
 *.sqlite-journal
+*.tsbuildinfo
