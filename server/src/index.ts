@@ -1,13 +1,35 @@
 import express from 'express';
 import fs from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { config } from './config.js';
 import { circuitsRouter } from './routes/circuits.js';
 
 const app = express();
 app.use(express.json());
 
+// Checks the things a circuit save/load depends on: the SQLite driver works
+// and the circuits directory is writable. Returns 503 if either fails.
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' });
+  const checks = { sqlite: false, circuitsDir: false };
+  try {
+    const db = new DatabaseSync(':memory:');
+    checks.sqlite = db.prepare('SELECT 1 AS ok').get()?.ok === 1;
+    db.close();
+  } catch {
+    // leave sqlite check false
+  }
+  try {
+    fs.accessSync(config.circuitsDir, fs.constants.R_OK | fs.constants.W_OK);
+    checks.circuitsDir = true;
+  } catch {
+    // leave circuitsDir check false
+  }
+  const healthy = checks.sqlite && checks.circuitsDir;
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'degraded',
+    uptimeSeconds: Math.round(process.uptime()),
+    checks,
+  });
 });
 
 app.use('/api/circuits', circuitsRouter);
